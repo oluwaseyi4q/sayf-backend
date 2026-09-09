@@ -3,8 +3,20 @@ const crypto = require("crypto");
 
 const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET;
 const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
-const ACCESS_EXPIRES_IN = Number(process.env.JWT_ACCESS_EXPIRES_IN );
-const REFRESH_EXPIRES_IN = Number(process.env.JWT_REFRESH_EXPIRES_IN );
+
+// Parse expiration - handles both "86400" (number) and "1d" (string)
+function parseExpiration(value) {
+  if (!value) return 3600; // default 1 hour
+  // If it's a pure number string like "86400"
+  if (/^\d+$/.test(value)) {
+    return Number(value);
+  }
+  // Otherwise return as string (like "1d", "30d")
+  return value;
+}
+
+const ACCESS_EXPIRES_IN = parseExpiration(process.env.JWT_ACCESS_EXPIRES_IN);
+const REFRESH_EXPIRES_IN = parseExpiration(process.env.JWT_REFRESH_EXPIRES_IN);
 
 function signAccessToken(admin) {
   return jwt.sign({ sub: admin.id, email: admin.email }, ACCESS_SECRET, {
