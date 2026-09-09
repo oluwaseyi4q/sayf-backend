@@ -3,8 +3,8 @@ const crypto = require("crypto");
 
 const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET;
 const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
-const ACCESS_EXPIRES_IN = Number(process.env.JWT_ACCESS_EXPIRES_IN || 3600);
-const REFRESH_EXPIRES_IN = Number(process.env.JWT_REFRESH_EXPIRES_IN || 2592000);
+const ACCESS_EXPIRES_IN = Number(process.env.JWT_ACCESS_EXPIRES_IN );
+const REFRESH_EXPIRES_IN = Number(process.env.JWT_REFRESH_EXPIRES_IN );
 
 function signAccessToken(admin) {
   return jwt.sign({ sub: admin.id, email: admin.email }, ACCESS_SECRET, {
