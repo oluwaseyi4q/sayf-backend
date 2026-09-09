@@ -2,6 +2,8 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
+const swaggerUi = require("swagger-ui-express");
+const swaggerSpec = require("./config/swagger");
 
 const { sanitizeInputs } = require("./middleware/sanitize");
 const { notFoundHandler, errorHandler } = require("./middleware/errorHandler");
@@ -61,7 +63,7 @@ v1.use("/newsletter", newsletterRoutes);
 v1.use("/media", mediaRoutes);
 v1.use("/settings", settingsRoutes);
 v1.use("/admin", adminRoutes);
-
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/v1", v1);
 
 // --- 404 + error handling (must be last) ---
