@@ -5,8 +5,8 @@ const asyncHandler = require("../utils/asyncHandler");
 
 // POST /media/upload (protected, multipart/form-data with "image" field)
 const uploadMedia = asyncHandler(async (req, res) => {
-  if (!req.file) throw new ApiError(400, "VALIDATION_ERROR", "No image file provided (field name: image)");
-
+if (!req.file) throw new ApiError(400, "VALIDATION_ERROR", "No image file provided");
+// Remove the field name mention or change to 'file'
   if (!process.env.CLOUDINARY_CLOUD_NAME) {
     throw new ApiError(
       500,

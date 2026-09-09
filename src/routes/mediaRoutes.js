@@ -16,6 +16,8 @@ const upload = multer({
 
 const router = express.Router();
 
-router.post("/upload", requireAuth, upload.single("image"), ctrl.uploadMedia);
+// Change 'image' to 'file' to match frontend
+router.post("/upload", requireAuth, upload.single("file"), ctrl.uploadMedia);
+//                                                      ^^^^
 
 module.exports = router;
