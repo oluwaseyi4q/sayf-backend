@@ -28,20 +28,28 @@ const subscribe = asyncHandler(async (req, res) => {
     existing.isActive = true;
     if (name) existing.name = name;
     await existing.save();
-    return res.status(200).json({ message: "Subscribed successfully", data: toApi(existing) });
+    return res
+      .status(200)
+      .json({ message: "Subscribed successfully", data: toApi(existing) });
   }
 
   const unsubscribeToken = crypto.randomBytes(24).toString("hex");
   const subscriber = await Subscriber.create({ email, name, unsubscribeToken });
 
   const unsubscribeUrl = `${process.env.FRONTEND_URL || ""}/newsletter/unsubscribe?token=${unsubscribeToken}`;
-  await sendMail({
+
+  // Fire and forget the email dispatch so SMTP delays don't hang the API response
+  sendMail({
     to: email,
     subject: "Welcome to the Sayf Technology Newsletter",
     html: `<p>Hi ${name || "there"},</p><p>Thanks for subscribing to the Sayf Technology newsletter! You'll hear from us with updates and insights.</p><p><a href="${unsubscribeUrl}">Unsubscribe</a> at any time.</p>`,
+  }).catch((err) => {
+    console.error("[Newsletter] Failed to send welcome email:", err.message);
   });
 
-  res.status(201).json({ message: "Subscribed successfully", data: toApi(subscriber) });
+  res
+    .status(201)
+    .json({ message: "Subscribed successfully", data: toApi(subscriber) });
 });
 
 // POST /newsletter/unsubscribe (public, via token)
@@ -50,7 +58,8 @@ const unsubscribe = asyncHandler(async (req, res) => {
   if (!token) throw new ApiError(400, "VALIDATION_ERROR", "token is required");
 
   const subscriber = await Subscriber.findOne({ unsubscribeToken: token });
-  if (!subscriber) throw new ApiError(404, "NOT_FOUND", "Invalid unsubscribe token");
+  if (!subscriber)
+    throw new ApiError(404, "NOT_FOUND", "Invalid unsubscribe token");
 
   subscriber.isActive = false;
   await subscriber.save();
@@ -73,7 +82,12 @@ const getSubscribers = asyncHandler(async (req, res) => {
 
   res.json({
     data: items.map(toApi),
-    pagination: { total, page: currentPage, limit: take, pages: Math.ceil(total / take) },
+    pagination: {
+      total,
+      page: currentPage,
+      limit: take,
+      pages: Math.ceil(total / take),
+    },
   });
 });
 
@@ -84,7 +98,9 @@ const exportSubscribers = asyncHandler(async (req, res) => {
   const escapeCsv = (val) => `"${String(val ?? "").replace(/"/g, '""')}"`;
   const header = "id,email,name,is_active,subscribed_at";
   const rows = items.map((s) =>
-    [s._id, s.email, s.name || "", s.isActive, s.subscribedAt.toISOString()].map(escapeCsv).join(",")
+    [s._id, s.email, s.name || "", s.isActive, s.subscribedAt.toISOString()]
+      .map(escapeCsv)
+      .join(","),
   );
   const csv = [header, ...rows].join("\n");
 
