@@ -4,15 +4,20 @@ const crypto = require("crypto");
 const ACCESS_SECRET = process.env.JWT_ACCESS_SECRET;
 const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 
-// Parse expiration - handles both "86400" (number) and "1d" (string)
 function parseExpiration(value) {
   if (!value) return 3600; // default 1 hour
+
+  // Clean up the string just in case they added spaces in Render env vars
+  const cleaned = String(value).trim();
+  if (!cleaned) return 3600;
+
   // If it's a pure number string like "86400"
-  if (/^\d+$/.test(value)) {
-    return Number(value);
+  if (/^\d+$/.test(cleaned)) {
+    return Number(cleaned);
   }
+
   // Otherwise return as string (like "1d", "30d")
-  return value;
+  return cleaned;
 }
 
 const ACCESS_EXPIRES_IN = parseExpiration(process.env.JWT_ACCESS_EXPIRES_IN);
