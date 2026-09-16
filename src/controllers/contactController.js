@@ -35,7 +35,8 @@ const createContactSubmission = asyncHandler(async (req, res) => {
     preferredContact: b.preferred_contact,
   });
 
-  await Promise.allSettled([
+  // Fire and forget email dispatch to prevent SMTP delays from hanging the request
+  Promise.allSettled([
     sendMail({
       to: submission.email,
       subject: "We received your message — Sayf Technology",
@@ -47,7 +48,9 @@ const createContactSubmission = asyncHandler(async (req, res) => {
       subject: `New contact submission from ${submission.name}`,
       html: `<p><strong>Name:</strong> ${submission.name}</p><p><strong>Email:</strong> ${submission.email}</p><p><strong>Phone:</strong> ${submission.phone || "-"}</p><p><strong>Company:</strong> ${submission.company || "-"}</p><p><strong>Budget:</strong> ${submission.budget || "-"}</p><p><strong>Message:</strong> ${submission.description}</p>`,
     }),
-  ]);
+  ]).catch((err) =>
+    console.error("[Contact] Error queuing emails:", err.message),
+  );
 
   res.status(201).json({ data: toApi(submission) });
 });
@@ -69,7 +72,12 @@ const getContactSubmissions = asyncHandler(async (req, res) => {
 
   res.json({
     data: items.map(toApi),
-    pagination: { total, page: currentPage, limit: take, pages: Math.ceil(total / take) },
+    pagination: {
+      total,
+      page: currentPage,
+      limit: take,
+      pages: Math.ceil(total / take),
+    },
   });
 });
 
@@ -78,13 +86,19 @@ const updateContactSubmission = asyncHandler(async (req, res) => {
   requireValidId(req.params.id);
   const data = {};
   if (req.body.status !== undefined) data.status = req.body.status;
-  if (req.body.assigned_to !== undefined) data.assignedTo = req.body.assigned_to;
+  if (req.body.assigned_to !== undefined)
+    data.assignedTo = req.body.assigned_to;
 
-  const submission = await ContactSubmission.findByIdAndUpdate(req.params.id, data, {
-    new: true,
-    runValidators: true,
-  });
-  if (!submission) throw new ApiError(404, "NOT_FOUND", "Contact submission not found");
+  const submission = await ContactSubmission.findByIdAndUpdate(
+    req.params.id,
+    data,
+    {
+      new: true,
+      runValidators: true,
+    },
+  );
+  if (!submission)
+    throw new ApiError(404, "NOT_FOUND", "Contact submission not found");
   res.json({ data: toApi(submission) });
 });
 
@@ -94,9 +108,10 @@ const archiveContactSubmission = asyncHandler(async (req, res) => {
   const submission = await ContactSubmission.findByIdAndUpdate(
     req.params.id,
     { status: "archived" },
-    { new: true }
+    { new: true },
   );
-  if (!submission) throw new ApiError(404, "NOT_FOUND", "Contact submission not found");
+  if (!submission)
+    throw new ApiError(404, "NOT_FOUND", "Contact submission not found");
   res.json({ data: toApi(submission) });
 });
 
