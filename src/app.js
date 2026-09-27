@@ -18,6 +18,7 @@ const newsletterRoutes = require("./routes/newsletterRoutes");
 const mediaRoutes = require("./routes/mediaRoutes");
 const settingsRoutes = require("./routes/settingsRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const updateRoutes = require("./routes/updateRoutes");
 
 const app = express();
 
@@ -33,13 +34,17 @@ app.use(
   cors({
     origin(origin, callback) {
       // Allow non-browser tools (no origin header) and any configured origin
-      if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+      if (
+        !origin ||
+        allowedOrigins.length === 0 ||
+        allowedOrigins.includes(origin)
+      ) {
         return callback(null, true);
       }
       return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
-  })
+  }),
 );
 
 app.use(express.json({ limit: "5mb" }));
@@ -48,7 +53,9 @@ app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 app.use(sanitizeInputs);
 
 // --- Health check ---
-app.get("/", (req, res) => res.json({ status: "ok", service: "Sayf Technology API", version: "v1" }));
+app.get("/", (req, res) =>
+  res.json({ status: "ok", service: "Sayf Technology API", version: "v1" }),
+);
 app.get("/v1/health", (req, res) => res.json({ status: "ok" }));
 
 // --- API v1 routes ---
@@ -63,6 +70,7 @@ v1.use("/newsletter", newsletterRoutes);
 v1.use("/media", mediaRoutes);
 v1.use("/settings", settingsRoutes);
 v1.use("/admin", adminRoutes);
+v1.use("/updates", updateRoutes);
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/v1", v1);
 
